@@ -20,17 +20,25 @@ import com.trivago.cluecumber.constants.PluginSettings;
 import com.trivago.cluecumber.json.pojo.Element;
 import com.trivago.cluecumber.json.pojo.Report;
 import com.trivago.cluecumber.json.pojo.Step;
+import com.trivago.cluecumber.json.pojo.Tag;
 import com.trivago.cluecumber.rendering.pages.pojos.ResultCount;
 import com.trivago.cluecumber.rendering.pages.pojos.Times;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AllStepsPageCollection extends ScenarioSummaryPageCollection {
     private Map<Step, ResultCount> stepResultCounts = new HashMap<>();
     private Map<Step, Times> stepTimes = new HashMap<>();
+    private Map<Step, List<Tag>> stepTags = new HashMap<>();
+    private List<Tag> allTags = new ArrayList<>();
+    private List<String> allGlueClasses = new ArrayList<>();
 
     public AllStepsPageCollection(List<Report> reports) {
         super(PluginSettings.STEP_SUMMARY_PAGE_NAME);
@@ -74,6 +82,19 @@ public class AllStepsPageCollection extends ScenarioSummaryPageCollection {
         return stepTimes.get(step).getAverageTimeString();
     }
 
+    public List<Tag> getTagsFromStep(final Step step) {
+        return stepTags.get(step);
+    }
+    
+    public List<Tag> getAllTags() {    	
+    	return allTags;
+    }
+
+    public List<String> getAllGlueClasses() {
+    	
+    	return allGlueClasses;    	
+    }
+
     /**
      * Calculate the numbers of failures, successes and skips per step.
      *
@@ -81,10 +102,21 @@ public class AllStepsPageCollection extends ScenarioSummaryPageCollection {
      */
     private void calculateStepResultCounts(final List<Report> reports) {
         if (reports == null) return;
+        
+        Set<Tag> allTagsSet =  new HashSet<>();
+        Set<String> allGlueSet =  new HashSet<>();
+        
         for (Report report : reports) {
             for (Element element : report.getElements()) {
                 int scenarioIndex = element.getScenarioIndex();
+            	allTagsSet.addAll(element.getTags());
                 for (Step step : element.getSteps()) {
+                	if (step.getGlueMethodName() != null && step.getGlueMethodName().contains(".")) {
+                	   allGlueSet.add(step.getGlueMethodName().split("\\.")[0]);
+                	}
+                	if (element.getTags() != null) {
+                	   stepTags.put(step, element.getTags());
+                	}
                     ResultCount stepResultCount = stepResultCounts.getOrDefault(step, new ResultCount());
                     updateResultCount(stepResultCount, step.getStatus());
                     stepResultCounts.put(step, stepResultCount);
@@ -97,5 +129,8 @@ public class AllStepsPageCollection extends ScenarioSummaryPageCollection {
                 }
             }
         }
+        
+        allTags = allTagsSet.stream().sorted((t1, t2) -> t1.getName().compareTo(t2.getName())).collect(Collectors.toCollection(ArrayList::new));
+        allGlueClasses = allGlueSet.stream().sorted().collect(Collectors.toCollection(ArrayList::new));
     }
 }

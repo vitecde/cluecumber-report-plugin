@@ -43,14 +43,53 @@ preheadlineLink="">
             </li>
         </@page.card>
     </div>
-
+    <script>
+   $(document).ready(function() {
+   $('.renderAsDataTable').dataTable().api().column(1).visible(false);
+   $('.renderAsDataTable').dataTable().api().column(2).visible(false);
+   var select = $('#tagfilter').on( 'change', function () {
+                        var val = $(this).val();
+                         
+                        $('.renderAsDataTable').dataTable().api()
+                            .column(2)
+                            .search( val )
+                            .draw();
+                });
+ 
+   var select = $('#gluefilter').on( 'change', function () {
+                        var val = $(this).val();
+ 
+                        $('.renderAsDataTable').dataTable().api()
+                            .column(1)
+                            .search( val )
+                            .draw();
+                });
+ 
+  });
+    </script>
     <div class="row">
         <@page.card width="12" title="Available Steps" subtitle="" classes="">
+            Filter by Class: 
+            <select id="gluefilter">
+                <option></option>
+                <#list allGlueClasses as glueClass>
+                <option>${glueClass}</option>
+                </#list>
+            </select>
+            Filter by Tag: 
+            <select id="tagfilter">
+                <option></option>
+                <#list allTags as tag>
+                <option>${tag.name}</option>
+                </#list>
+            </select>
             <table id="step_summary" class="table table-hover renderAsDataTable"
                    data-cluecumber-item="step-summary-table">
                 <thead>
                 <tr>
                     <th>Step</th>
+                    <th style="dislay:none;">Glue Code</th>
+                    <th style="dislay:none;">Tags</th>
                     <th>Total</th>
                     <th><@common.status status="passed"/></th>
                     <th><@common.status status="failed"/></th>
@@ -68,6 +107,8 @@ preheadlineLink="">
                                 <a href="pages/step-scenarios/step_${step.getUrlFriendlyName()}.html">${step.returnNameWithArgumentPlaceholders()}</a>
                             </span>
                         </td>
+                        <td class="text-left" style="dislay:none;">${step.glueMethodName}</td>
+                        <td class="text-left" style="dislay:none;"><#list getTagsFromStep(step) as tag>${tag.name} </#list></td>
                         <td class="text-right"><strong>${stepResultCount.total}</strong></td>
                         <td class="text-right">${stepResultCount.passed}</td>
                         <td class="text-right">${stepResultCount.failed}</td>
